@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Davis Smoker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one-column field app, sticky header, bottom tab bar; butcher-paper ground, ember accent, firebox-steel ink */
+:root{
+  --paper:#efe4dc; --card:#f8f1ec; --line:#d9c7bb; --ink:#2a1f1b; --muted:#76625a;
+  --ember:#b5401c; --ember-ink:#fff6f0; --smoke:#4f6d7a; --meat:#7a3b5a;
+  --ok:#3d7a3f; --warn:#a86b00; --bad:#b3261e; --chip:#e6d6cb;
+  --p1:#b5401c; --p2:#4f6d7a; --p3:#7a3b5a; --p4:#8a7a1f; --p5:#2f7d6b; --p6:#5b4a9e;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Barlow","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#1b1715; --card:#262019; --line:#3a312a; --ink:#f1e6dd; --muted:#a8968b;
+  --ember:#e2683c; --ember-ink:#1b1715; --smoke:#8fb2c1; --meat:#d38bb0;
+  --ok:#7cc47f; --warn:#e3a640; --bad:#f07a6f; --chip:#332a23;
+  --p1:#e2683c; --p2:#8fb2c1; --p3:#d38bb0; --p4:#d9c25a; --p5:#6cc4ad; --p6:#a99be6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b1715; --card:#262019; --line:#3a312a; --ink:#f1e6dd; --muted:#a8968b;
+  --ember:#e2683c; --ember-ink:#1b1715; --smoke:#8fb2c1; --meat:#d38bb0;
+  --ok:#7cc47f; --warn:#e3a640; --bad:#f07a6f; --chip:#332a23;
+  --p1:#e2683c; --p2:#8fb2c1; --p3:#d38bb0; --p4:#d9c25a; --p5:#6cc4ad; --p6:#a99be6; color-scheme:dark}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.4;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ember);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:var(--paper);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+header.top h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+header.top .sub{font-size:13px;opacity:.75}
+.wrap{max-width:720px;margin:0 auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{border:0;background:none;padding:10px 2px 12px;min-height:60px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--ember)}
+
+h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:24px;margin:0;line-height:1.05;text-wrap:balance}
+h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.empty{padding:20px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty p{margin:0}
+
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;min-height:48px;padding:0 16px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--ember);border-color:var(--ember);color:var(--ember-ink)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn.block{width:100%}
+.btn.sm{min-height:40px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.5}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--chip);border-radius:999px;min-height:44px;padding:0 14px;font-weight:600;font-size:15px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip.wood{background:var(--paper)}
+
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+label.chk{display:flex;gap:10px;align-items:center;font-weight:600;min-height:44px}
+label.chk input{width:22px;height:22px;accent-color:var(--ember)}
+input.in,select.in,textarea.in{background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:48px;padding:8px 12px;font-size:17px;color:var(--ink);width:100%}
+textarea.in{min-height:72px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:360px){.grid3{grid-template-columns:1fr 1fr}}
+
+/* cooks */
+.cook{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%}
+.cook .name{font-weight:700;font-size:18px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--chip);color:var(--muted)}
+.pill.live{background:var(--ember);color:var(--ember-ink)}
+.pill.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.pill.live::before{animation:none}}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;width:100%}
+.gauge{background:var(--paper);border-radius:8px;padding:8px 10px;min-width:0;border-left:4px solid var(--c,var(--line))}
+.gauge .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gauge .v{font-family:var(--f-mono);font-weight:600;font-size:24px;line-height:1.15}
+.gauge .v small{font-size:13px;color:var(--muted)}
+.gauge.hot .v{color:var(--bad)} .gauge.cool .v{color:var(--smoke)}
+.clock{font-family:var(--f-mono);font-size:40px;font-weight:600;line-height:1}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{border-top:1px solid var(--line)}
+.steps li:first-child{border-top:0}
+.steps button{width:100%;background:none;border:0;display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 2px;text-align:left}
+.steps .lbl small{display:block;font-size:13px;color:var(--muted);text-decoration:none}
+.box{width:28px;height:28px;border:2px solid var(--muted);border-radius:6px;flex:none;display:grid;place-items:center}
+.done .box{background:var(--ok);border-color:var(--ok);color:var(--card)}
+.done .lbl b{color:var(--muted);text-decoration:line-through;font-weight:500}
+.steps .t{margin-left:auto;font-family:var(--f-mono);font-size:13px;color:var(--muted);flex:none}
+.log{list-style:none;margin:0;padding:0;font-size:14px}
+.log li{display:grid;grid-template-columns:60px 1fr auto;gap:8px;padding:8px 0;border-top:1px solid var(--line);align-items:baseline}
+.log li:first-child{border-top:0}
+.log .t{font-family:var(--f-mono);color:var(--muted)}
+.chart{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.status{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--paper);font-size:14px}
+.status b{display:block;font-size:15px}
+.status.good{border-left:4px solid var(--ok)} .status.warn{border-left:4px solid var(--warn)} .status.bad{border-left:4px solid var(--bad)}
+.zone{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.zone div{border-radius:6px;padding:8px 4px;text-align:center;font-family:var(--f-mono);font-weight:600;font-size:15px;color:var(--ember-ink)}
+.zone small{display:block;font-family:var(--f-body);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;opacity:.85}
+
+/* inventory */
+.inv{display:flex;flex-direction:column}
+.inv .it{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.inv .it:first-child{border-top:0}
+.inv .nm{flex:1;min-width:0;background:none;border:0;text-align:left;padding:6px 0}
+.inv .nm b{display:block;font-weight:600}
+.inv .nm span{font-size:13px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--paper);font-size:22px;font-weight:600;line-height:1}
+.qty .q{min-width:52px;text-align:center;font-family:var(--f-mono);font-weight:600;font-size:18px}
+.low .q{color:var(--bad)}
+.flag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--bad)}
+
+/* sales */
+.big{font-family:var(--f-display);font-weight:800;font-size:44px;line-height:1}
+.menu{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.menu button{min-height:72px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:8px 10px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.menu button b{font-weight:700;font-size:16px;line-height:1.2}
+.menu button span{font-family:var(--f-mono);color:var(--muted);font-size:14px}
+.menu button.noprice span{color:var(--warn)}
+.lines{list-style:none;margin:0;padding:0}
+.lines li{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.lines li:first-child{border-top:0}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:15px}
+.kv .r{text-align:right;font-variant-numeric:tabular-nums}
+.kv .tot{font-weight:700;border-top:1px solid var(--line);padding-top:6px}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:62px 1fr 78px;gap:8px;align-items:center;font-size:14px}
+.bar .tr{height:14px;background:var(--paper);border-radius:3px;overflow:hidden}
+.bar .fl{height:100%;background:var(--ember);border-radius:3px}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th,table.t td{padding:8px 6px;border-top:1px solid var(--line);text-align:left}
+table.t th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-top:0}
+table.t td.r,table.t th.r{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px)}
+.note{background:var(--chip);border-radius:8px;padding:10px 12px;font-size:14px}
+.sel{user-select:all;font-family:var(--f-mono);font-weight:600}
+body.ro .w{display:none!important}
+.mini{display:flex;flex-direction:column;width:100%;border-top:1px solid var(--line)}
+.mrow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .mono{font-weight:600;font-size:18px;min-width:52px;text-align:right}
+.togo{min-width:72px;text-align:right;color:var(--muted)}
+.items{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px;padding:10px 12px;min-height:64px}
+.item.on{border-left-color:var(--ember)}
+.item.off{border-left-color:var(--muted);opacity:.85}
+.item.ready{border-left-color:var(--ok)}
+.item.ready .tv .small{color:var(--ok);font-weight:700}
+.item .tv{display:flex;flex-direction:column;align-items:flex-end;flex:none}
+.item .tv .mono{font-weight:600;font-size:20px}
+.item .tv .small{color:var(--muted)}
+.plbl{border-left:4px solid var(--c,var(--line));padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html,body{margin:0}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+img{max-width:100%}
+[hidden]{display:none!important}
+.sync{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;border-radius:999px;min-height:34px;padding:0 12px;font-size:13px;font-weight:600}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.ok i{background:#6cc47f}.sync.wait i{background:#e3a640}.sync.err i{background:#f07a6f}
+.top{align-items:center!important}
+header.top h1{white-space:nowrap}
+@media (max-width:440px){header.top .sub{display:none}}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.who{font-size:12px;opacity:.75}
+.by{font-size:11px;color:var(--muted);margin-left:4px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Davis Smoker</h1>
+  <div class="hdr-r"><span class="sub" id="hdrsub">Cook log</span><button class="sync" id="syncchip" data-act="settings" aria-label="Sync and settings"><i></i><span>Setup</span></button></div>
+</header>
+<main class="wrap" id="app">
+  <div class="empty">Loading the smoker log…</div>
+</main>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="cooks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/></svg>Cooks</button>
+  <button data-tab="stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Stock</button>
+  <button data-tab="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/></svg>Sales</button>
+  <button data-tab="summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Totals</button>
+  <button data-tab="prep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11l2 2 4-4M9 17h6"/></svg>Prep</button>
+</nav>
+<div class="toast" id="toast" hidden></div>
+<script>
+(function(){
+"use strict";
+/* ---------- constants (from Davis's Smoker: Cooking & Business Plan) ---------- */
+const MEATS={
+  pork:{label:"Pulled pork",unit:"butts",chamber:"Main",target:203,probes:["Pork"],steps:[
+    ["Rub night before","Davis's Rub, refrigerate"],["Start spritzing","Hourly after hour 3, cider vinegar + apple juice"],["Wrap","~165°F if bark is right and the stall drags"],
+    ["Probe tender","200–205°F, bone wiggles free"],["Rested 1 hr"],["Pulled & sauced","Hold at 135°F+"]]},
+  brisket:{label:"Brisket",unit:"briskets",chamber:"Main",target:203,probes:["Brisket"],steps:[
+    ["Trim","Fat cap to ¼ in, square edges; save trim for beans"],["SPG night before","Refrigerate uncovered"],["Fat side toward the heat"],
+    ["Wrap in butcher paper","Bark dark and set, ~165–175°F"],["Probe tender","Like soft butter, 200–205°F"],["Rested 1–4 hr","Dry cooler, hold above 135°F"],["Sliced","Flat across grain; point to burnt ends"]]},
+  ribs:{label:"St. Louis ribs",unit:"racks",chamber:"Main",target:198,probes:["Ribs"],steps:[
+    ["Membrane off & rub","Davis's Rub"],["Start spritzing","Hourly after the first 2 hr"],["Wrap (optional)","Butter + brown sugar, last hour"],
+    ["Bend test","Surface cracks; 195–203°F between bones"],["Sauce & set 15 min"]]},
+  chicken:{label:"Hung chicken",unit:"birds",chamber:"Vertical",target:165,probes:["Chicken breast","Chicken thigh"],steps:[
+    ["Brine 4–12 hr","Per gallon: ½ cup kosher salt, ¼ cup brown sugar"],["Dry, rub & truss"],["Hung with space between"],
+    ["Every bird checked","Breast 165°F, thigh 175°F"],["Rested"]]},
+  turkey:{label:"Holiday turkey",unit:"birds",chamber:"Vertical",target:165,probes:["Turkey breast"],steps:[
+    ["Brine 12–24 hr"],["Dry, rub & truss"],["Hung, 2 at a time"],["Breast 165°F","Roughly 4–5 hr; check every bird"],["Rested"]]},
+  cheese:{label:"Cheese",unit:"blocks",chamber:"Vertical",target:null,probes:[],steps:[
+    ["Outside below 50°F"],["Chamber under 90°F","Small smolder or pellet tube, baffle barely open"],["Out after 2–4 hr"],["Vacuum-seal & fridge","Mellow 1–2 weeks"]]},
+  other:{label:"Other",unit:"pieces",chamber:"Main",target:null,probes:["Meat"],steps:[]}
+};
+const KINDS={
+  run:{label:"Smoke run",wood:"Oak",steps:[["Fire lit","Small, hot, clean fire, intake open"],["Thin blue smoke"],["Pit at 250–275°F"]]},
+  testfire:{label:"Test fire",wood:"Oak",steps:[["Inspect","Welds, hinges, stack, trailer tires, lights, bearings"],["Burn-out","350°F+ for 1 hr"],["Probes placed","Both shelves + vertical chamber"],
+    ["Center at 250°F"],["Logged every probe hourly","Plus splits added"],["Held 4–6 hr"],["Hot & cool zones mapped"]]},
+  cold:{label:"Cold smoke",wood:"Alder",steps:[["Outside below 50°F"],["Small smolder or pellet tube"],["Chamber under 90°F"]]}
+};
+const TEST_PROBES=[["LL","Lower left"],["LC","Lower center"],["LR","Lower right"],["UL","Upper left"],["UR","Upper right"],["V","Vertical"]];
+const EVENTS=["Spritzed","Wrapped","Door opened","Intake adjusted","Sauced","Blanket on"];
+const WOODS=["Oak","Apple","Cherry","Alder","Mixed"];
+const PCOL=["var(--p1)","var(--p2)","var(--p3)","var(--p4)","var(--p5)","var(--p6)"];
+const PEOPLE=["Chuck","Max","Ben"];
+const STARTER_INV=[
+ ["Oregon white oak splits","splits","Wood",20],["Apple splits","splits","Wood",10],["Cherry splits","splits","Wood",10],["Red alder splits","splits","Wood",10],
+ ["Bone-in pork butts","each","Meat",4],["Whole chickens","each","Meat",6],["St. Louis rib racks","racks","Meat",6],["Packer briskets","each","Meat",1],["Turkeys","each","Meat",2],["Cheddar","lb","Meat",2],
+ ["Kosher salt","lb","Rub & sauce",2],["Coarse black pepper (16 mesh)","lb","Rub & sauce",1],["Granulated garlic","lb","Rub & sauce",1],["Brown sugar","lb","Rub & sauce",2],["Paprika","lb","Rub & sauce",1],["Onion powder","lb","Rub & sauce",0.5],["Cayenne","oz","Rub & sauce",2],
+ ["Marionberry jam","jars","Rub & sauce",2],["Ketchup","bottles","Rub & sauce",2],["Cider vinegar","qt","Rub & sauce",1],["Worcestershire","bottles","Rub & sauce",1],["Dijon","jars","Rub & sauce",1],
+ ["Elbow macaroni","lb","Sides",4],["Pinto beans","cans","Sides",8],["Cabbage","heads","Sides",2],
+ ["Pink butcher paper","rolls","Supplies",1],["Foil","rolls","Supplies",1],["Nitrile gloves","boxes","Supplies",1],["Takeout clamshells","each","Supplies",50],["Hotel pans","each","Supplies",4],["Napkins","packs","Supplies",2],["Probe thermometer batteries","each","Supplies",4]
+];
+const STARTER_MENU=[["Pulled pork sandwich with slaw",14],["Pork plate (½ lb, 2 sides)",20],["Half chicken plate (2 sides)",18],["Half rack St. Louis ribs (1 side)",22],["Brisket plate, limited (⅓ lb, 2 sides)",26],["Side (mac, beans, slaw)",5]];
+const COUNTY_QS=["Will they accept the smoker as the auxiliary cooking unit, and does it need to be physically attached?","Can a smoker work under a temporary restaurant license while the full license is pending?","What overnight cooking and holding setup will they approve for long brisket cooks?","Self-sufficient unit or commissary agreement: which do they recommend for this menu?"];
+const PLAN_DEFAULT=["Measure each shelf's depth","Inspect the smoker and trailer, then do the burn-out and the 6-hour test fire with probes","Practice cooks: pork butt first, then chicken, ribs, and brisket last","Smoke turkeys for family at Thanksgiving as a dry run for next year's preorders","Call Lane County Environmental Health with the questions on the Prep tab","Food handler cards for Max and Ben; one takes a Certified Food Protection Manager course","Pick a business name and form the LLC","Get quotes: insurance, a concession trailer or sink setup, road-legal trailer work, meat and firewood","Visit three breweries with samples and ask about spring slots"];
+const NATIVE=window.Native||null;
+const APP_VERSION=NATIVE&&NATIVE.version?NATIVE.version():"web";
+
+/* ---------- small helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uidGen=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const money=n=>(n<0?"−$":"$")+Math.abs(Number(n)||0).toFixed(2);
+const pad=n=>String(n).padStart(2,"0");
+const dayKey=(d=new Date())=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const hm=ms=>{const d=new Date(ms);let h=d.getHours();const ap=h>=12?"p":"a";h=h%12||12;return h+":"+pad(d.getMinutes())+ap};
+const dur=ms=>{if(ms<0)ms=0;const m=Math.floor(ms/60000);return Math.floor(m/60)+"h "+pad(m%60)+"m"};
+const ago=ms=>{const s=Math.round((Date.now()-ms)/1000);if(s<60)return"just now";if(s<3600)return Math.round(s/60)+" min ago";if(s<86400)return Math.round(s/3600)+" hr ago";return Math.round(s/86400)+" days ago"};
+const numOrNull=v=>{const n=parseFloat(String(v??"").replace(/[$,]/g,""));return isFinite(n)?n:null};
+const fmtDay=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})};
+const shortDay=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"})};
+function lsGet(k,def){try{const v=localStorage.getItem(k);return v==null?def:JSON.parse(v)}catch(e){return def}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+
+/* ---------- merge rules (identical to the Google Sheet script) ---------- */
+function isObj(x){return x!==null&&typeof x==="object"&&!Array.isArray(x)}
+function clone(x){return x==null?x:JSON.parse(JSON.stringify(x))}
+function deepMerge(a,b){const out=clone(a)||{};Object.keys(b).forEach(k=>{out[k]=isObj(b[k])&&isObj(out[k])?deepMerge(out[k],b[k]):clone(b[k])});return out}
+function applyOp(cur,op){
+  switch(op.op){
+    case "set":return op.data&&typeof op.data==="object"?op.data:undefined;
+    case "delete":return cur?null:undefined;
+    case "update":return cur?deepMerge(cur,op.data||{}):undefined;
+    case "push":{const d=cur?clone(cur):(op.init?clone(op.init):null);if(!d)return undefined;
+      const arr=Array.isArray(d[op.field])?d[op.field]:[],v=op.value;
+      if(!(v&&v.id&&arr.some(x=>x&&x.id===v.id)))arr.push(v);d[op.field]=arr;return d}
+    case "pull":{if(!cur)return undefined;const p=clone(cur);p[op.field]=(Array.isArray(p[op.field])?p[op.field]:[]).filter(x=>!(x&&x.id===op.match));return p}
+    case "inc":{if(!cur)return undefined;const q=clone(cur);let n=(Number(q[op.field])||0)+(Number(op.by)||0);if(op.min!=null&&n<op.min)n=op.min;q[op.field]=Math.round(n*1000)/1000;return q}
+  }
+  return undefined;
+}
+
+/* ---------- local store + sync with the Google Sheet ----------
+   mirror  = last copy received from the Sheet (or built locally before setup)
+   outbox  = changes made on this phone that the Sheet hasn't confirmed yet
+   view    = mirror with outbox applied on top: what the screens show */
+const Store=(function(){
+  let cfg=lsGet("ds_cfg",{}),mirror=lsGet("ds_mirror",{}),outbox=lsGet("ds_outbox",[]),since=lsGet("ds_since",0);
+  if(!cfg.dev){cfg.dev="d"+uidGen();lsSet("ds_cfg",cfg)}
+  let view=null,syncing=false,status={state:cfg.url?"idle":"local",last:lsGet("ds_last",0),error:""},timer=null,listeners=[];
+  if(!cfg.url&&!Object.keys(mirror).length&&!outbox.length){
+    mirror={plan:{checklist:{items:PLAN_DEFAULT.map(t=>({t,at:null}))}}};lsSet("ds_mirror",mirror);
+  }
+  function compute(){
+    const v={};for(const c in mirror){v[c]={};for(const id in mirror[c])v[c][id]=mirror[c][id]}
+    for(const op of outbox){const col=v[op.c]=v[op.c]||{};const nx=applyOp(col[op.id]||null,op);if(nx===undefined)continue;if(nx===null)delete col[op.id];else col[op.id]=nx}
+    view=v;
+  }
+  compute();
+  function emit(){listeners.forEach(f=>{try{f()}catch(e){console.error(e)}})}
+  function persist(){lsSet("ds_outbox",outbox);lsSet("ds_mirror",mirror);lsSet("ds_since",since)}
+  function op(o){
+    o.oid=o.oid||uidGen();o.t=Date.now();
+    outbox.push(o);
+    if(!lsSet("ds_outbox",outbox))toast("Phone storage is full. Sync or clear old data.");
+    compute();emit();schedule(1200);
+  }
+  function list(c){const col=view[c]||{};return Object.keys(col).map(id=>({id,...col[id]}))}
+  function get(c,id){const col=view[c]||{};return col[id]?{id,...col[id]}:null}
+  function schedule(ms){clearTimeout(timer);timer=setTimeout(sync,ms)}
+  function http(method,url,body){
+    if(NATIVE&&NATIVE.http)return new Promise((res,rej)=>{const id=uidGen();http.cb[id]=(code,text)=>{delete http.cb[id];code>0?res({code,text}):rej(new Error(text||"offline"))};NATIVE.http(id,method,url,body||"")});
+    return fetch(url,{method,body:method==="POST"?body:undefined,headers:{"Content-Type":"text/plain;charset=utf-8"},redirect:"follow"}).then(r=>r.text().then(text=>({code:r.status,text})));
+  }
+  http.cb={};
+  window.__nativeHttp=(id,code,text)=>{const f=http.cb[id];if(f)f(code,text)};
+  async function sync(){
+    clearTimeout(timer);
+    if(!cfg.url){status.state="local";emit();return}
+    if(syncing){schedule(3000);return}
+    syncing=true;status.state="busy";emit();
+    const batch=outbox.slice(0,60);
+    try{
+      const r=await http("POST",cfg.url,JSON.stringify({ops:batch,since,dev:cfg.dev}));
+      let res=null;try{res=JSON.parse(r.text)}catch(e){}
+      if(!res||!res.ok)throw new Error(res&&res.error==="busy"?"The Sheet is busy. Retrying.":(r.code===200?"The link didn't answer like the Davis Smoker script. Check the link in Settings.":"The Sheet answered with error "+r.code+". Check the link and that access is set to Anyone."));
+      const done=new Set(res.applied||[]);
+      outbox=outbox.filter(o=>!done.has(o.oid));
+      for(const d of res.docs||[]){const col=mirror[d.c]=mirror[d.c]||{};if(d.del||!d.data)delete col[d.id];else col[d.id]=d.data}
+      since=res.now||since;persist();
+      status={state:"ok",last:Date.now(),error:""};lsSet("ds_last",status.last);
+      compute();
+      if(outbox.length)schedule(400);else schedule(document.hidden?60000:15000);
+    }catch(e){
+      status.state="err";status.error=e.message||"Can't reach the Sheet";schedule(20000);
+    }finally{syncing=false;emit()}
+  }
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync()});
+  window.addEventListener("online",()=>sync());
+  return {
+    op,list,get,sync,schedule,http,
+    on(f){listeners.push(f)},
+    cfg:()=>cfg,
+    status:()=>({...status,waiting:outbox.length}),
+    setCfg(p){
+      const urlChanged=p.url!==undefined&&p.url!==cfg.url;
+      cfg={...cfg,...p};lsSet("ds_cfg",cfg);
+      if(urlChanged){
+        /* new Sheet: keep this phone's unsent changes, re-download everything else */
+        const hadLocalOnly=!since;
+        if(hadLocalOnly){for(const c in mirror)for(const id in mirror[c]){if(!(c==="plan"&&id==="checklist"))outbox.unshift({op:"set",c,id,data:mirror[c][id],oid:uidGen(),t:Date.now()})}}
+        mirror={};since=0;persist();compute();
+        status={state:cfg.url?"idle":"local",last:0,error:""};
+      }
+      emit();if(cfg.url)sync();
+    }
+  };
+})();
+
+/* ---------- app state ---------- */
+const S={cooks:[],inv:[],menu:[],sales:[],costs:{},plan:null,tab:"cooks",cook:null,item:null,newRun:null,addItem:null,
+  editInv:null,confirm:null,pay:lsGet("ds_pay","Card"),place:lsGet("ds_place",""),invAdd:false,menuOpen:false,costOpen:false,weigh:null,dirty:false,urlDraft:null};
+function refresh(){
+  S.cooks=Store.list("cooks").sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
+  S.inv=Store.list("inventory");S.menu=Store.list("menu");
+  S.sales=Store.list("sales").sort((a,b)=>String(b.day).localeCompare(String(a.day)));
+  S.costs={};Store.list("costs").forEach(d=>{const id=d.id;const x={...d};delete x.id;S.costs[id]=x});
+  S.plan=Store.get("plan","checklist");
+}
+const who=()=>Store.cfg().who||"";
+const dev=()=>Store.cfg().dev;
+
+/* ---------- smoke run model ---------- */
+const cookById=id=>S.cooks.find(x=>x.id===id);
+function itemsOf(c){const m=c.items||{};return Object.keys(m).filter(k=>m[k]).map(k=>({...m[k],id:k})).sort((a,b)=>(a.n||0)-(b.n||0))}
+const itemOf=(c,iid)=>itemsOf(c).find(i=>i.id===iid);
+function allProbes(c){
+  const out=(c.pitProbes||[]).map(p=>({...p,group:"pit"}));
+  itemsOf(c).forEach(it=>(it.probes||[]).forEach(p=>out.push({...p,kind:"meat",item:it.id,group:it.label})));
+  return out;
+}
+function saveCook(id,fields){Store.op({op:"update",c:"cooks",id,data:fields})}
+function pushLog(id,entry){Store.op({op:"push",c:"cooks",id,field:"log",value:{id:uidGen(),by:who(),...entry}})}
+function patchItem(id,iid,fields){saveCook(id,{items:{[iid]:fields}})}
+
+/* ---------- routing ---------- */
+const TABS=["cooks","stock","sales","summary","prep","settings"];
+function readHash(){const h=location.hash.slice(1);if(TABS.includes(h))S.tab=h}
+window.addEventListener("hashchange",()=>{readHash();S.cook=null;S.item=null;S.newRun=null;S.confirm=null;render(true);window.scrollTo(0,0)});
+readHash();
+window.appBack=function(){
+  if(S.confirm){S.confirm=null;render(true);return true}
+  if(S.item){S.item=null;render(true);window.scrollTo(0,0);return true}
+  if(S.cook){S.cook=null;render(true);window.scrollTo(0,0);return true}
+  if(S.newRun){S.newRun=null;render(true);return true}
+  if(S.tab!=="cooks"){location.hash="cooks";return true}
+  return false;
+};
+
+/* ---------- render ---------- */
+function syncChip(){
+  const st=Store.status(),el=$("#syncchip");if(!el)return;
+  let cls="",txt="";
+  if(st.state==="local"){cls="wait";txt=Store.cfg().url?"":"Not shared"}
+  else if(st.state==="err"){cls="err";txt=st.waiting?st.waiting+" waiting":"Offline"}
+  else if(st.state==="busy"||st.state==="idle"){cls="wait";txt=st.state==="idle"?"Connecting":"Syncing…"}
+  else if(st.waiting){cls="wait";txt=st.waiting+" waiting"}
+  else{cls="ok";txt="Synced"}
+  el.className="sync "+cls;el.querySelector("span").textContent=txt;
+}
+function render(force){
+  refresh();syncChip();
+  if(NATIVE&&NATIVE.keepAwake)try{NATIVE.keepAwake(S.cooks.some(c=>c.status==="live"))}catch(e){}
+  const a=document.activeElement;
+  if(!force&&a&&a.closest&&a.closest("#app")&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)){S.dirty=true;return}
+  S.dirty=false;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===S.tab?"page":"false"));
+  $("#hdrsub").textContent={cooks:"Cook log",stock:"Inventory",sales:"Sales",summary:"Totals",prep:"Getting ready",settings:"Settings"}[S.tab];
+  let html="";
+  if(S.tab!=="settings"&&!who())html+=`<button class="note" data-act="settings" style="text-align:left;border:0;width:100%">Tap here to set who uses this phone${Store.cfg().url?"":" and connect the shared Google Sheet"}.</button>`;
+  html+=({cooks:viewCooks,stock:viewStock,sales:viewSales,summary:viewSummary,prep:viewPrep,settings:viewSettings}[S.tab])();
+  $("#app").innerHTML=html;
+}
+document.addEventListener("focusout",()=>setTimeout(()=>{if(S.dirty)render()},0));
+
+/* ---------- readings ---------- */
+function lastReadings(c){const out={};for(const e of logSorted(c)){if(e.kind!=="temp"||!e.r)continue;for(const k in e.r)if(e.r[k]!=null)out[k]=e.r[k]}return out}
+function logSorted(c){return (c.log||[]).slice().sort((a,b)=>(a.at||0)-(b.at||0))}
+function lastTempAt(c){const l=(c.log||[]).filter(e=>e.kind==="temp");return l.length?Math.max(...l.map(e=>e.at)):null}
+function splitsOf(c){return (c.log||[]).reduce((a,e)=>a+(e.kind==="wood"?(e.n||0):0),0)}
+function runHours(c){return Math.max(((c.endedAt||Date.now())-c.startedAt)/3600000,0.01)}
+function pitCls(p,v){if(v==null)return"";if(p.kind==="air")return v>50?"hot":"";if(p.hi!=null&&v>p.hi+15)return"hot";if(p.lo&&v<p.lo-15)return"cool";return""}
+function gauge(label,v,cls,col){return `<div class="gauge ${cls}" style="--c:${col}"><div class="k">${esc(label)}</div><div class="v">${v==null?"<small>—</small>":Math.round(v)+"<small>°F</small>"}</div></div>`}
+function pitGauges(c){const r=lastReadings(c),all=allProbes(c);
+  return `<div class="gauges">${(c.pitProbes||[]).map(p=>gauge(p.label,r[p.id],pitCls(p,r[p.id]),PCOL[all.findIndex(q=>q.id===p.id)%6])).join("")}</div>`}
+function itemTemp(c,it){const r=lastReadings(c);const v=(it.probes||[]).map(p=>r[p.id]).filter(x=>x!=null);return v.length?Math.min(...v):null}
+function itemStatus(it){
+  if(!it.onAt)return {cls:"",txt:"Waiting to go on"};
+  if(!it.offAt)return {cls:"on",txt:"On "+dur(Date.now()-it.onAt),clock:it.onAt};
+  return {cls:"off",txt:"Off "+hm(it.offAt)+" · "+dur(it.offAt-it.onAt)};
+}
+function yieldOf(it){return it.rawLb&&it.cookedLb?Math.round(it.cookedLb/it.rawLb*100):null}
+
+/* ---------- cooks: list ---------- */
+function viewCooks(){
+  if(S.cook){const c=cookById(S.cook);if(c){if(S.item){const it=itemOf(c,S.item);if(it)return viewItem(c,it);S.item=null}return viewRun(c)}S.cook=null}
+  if(S.newRun)return viewNewRun();
+  const live=S.cooks.filter(c=>c.status==="live"),done=S.cooks.filter(c=>c.status!=="live");
+  let h=`<div class="row between"><h2>On the smoker</h2><button class="btn primary" data-act="new">+ Start a run</button></div>`;
+  if(!live.length)h+=`<div class="empty"><p>Nothing cooking. ${S.cooks.length?"":"The plan's first job is the test fire: 6 probes, 4–6 hours at 250°F, to map the hot and cool zones."}</p><button class="btn primary" data-act="new">Start a run</button></div>`;
+  live.forEach(c=>{
+    h+=`<button class="cook" data-act="open" data-id="${c.id}">
+      <div class="row between" style="width:100%"><span class="name">${esc(c.name)}</span><span class="row" style="gap:6px">${c.practice?`<span class="pill">Practice</span>`:""}<span class="pill live">Live</span></span></div>
+      <div class="row between small muted" style="width:100%"><span>Fire lit ${hm(c.startedAt)} · ${splitsOf(c)} splits</span><span class="mono" data-clock="${c.startedAt}">${dur(Date.now()-c.startedAt)}</span></div>
+      ${pitGauges(c)}
+      ${itemsOf(c).length?`<div class="mini">${itemsOf(c).map(it=>{const t=itemTemp(c,it),st=itemStatus(it);return `<div class="mrow"><span class="grow"><b>${esc(it.label)}</b>${it.count?` ×${it.count}`:""}<br><span class="small muted">${st.txt}</span></span><span class="mono">${t==null?"—":Math.round(t)+"°"}</span><span class="small togo">${it.target&&t!=null&&!it.offAt?(t>=it.target?"ready":Math.round(it.target-t)+"° to go"):""}</span></div>`}).join("")}</div>`:""}
+    </button>`});
+  if(done.length){
+    h+=`<h3 style="margin-top:8px">Finished</h3><div class="card" style="padding:4px 14px;gap:0">`;
+    done.slice(0,60).forEach((c,i)=>{
+      h+=`<button data-act="open" data-id="${c.id}" style="background:none;border:0;${i?"border-top:1px solid var(--line);":""}text-align:left;padding:12px 0;display:flex;justify-content:space-between;gap:10px;width:100%">
+        <span><b>${esc(c.name)}</b>${c.practice?` <span class="pill">Practice</span>`:""}<br><span class="small muted">${fmtDay(dayKey(new Date(c.startedAt)))}${c.endedAt?" · "+dur(c.endedAt-c.startedAt):""} · ${splitsOf(c)} splits</span></span>
+        <span class="small muted" style="text-align:right">${itemsOf(c).map(it=>esc(it.label)+(yieldOf(it)?" "+yieldOf(it)+"%":"")).join("<br>")}</span></button>`});
+    h+=`</div>`;
+  }
+  return h;
+}
+
+/* ---------- cooks: new run ---------- */
+function defaultPits(kind,meats){
+  if(kind==="testfire")return TEST_PROBES.map(([id,l])=>({id,label:l,kind:"pit",lo:240,hi:260}));
+  if(kind==="cold")return [{id:"V",label:"Vertical chamber",kind:"pit",lo:0,hi:90},{id:"O",label:"Outside air",kind:"air",lo:null,hi:null}];
+  const out=[{id:"L",label:"Left end",kind:"pit",lo:250,hi:275},{id:"R",label:"Firebox end",kind:"pit",lo:250,hi:275}];
+  if(meats.some(m=>MEATS[m].chamber==="Vertical"))out.push({id:"V",label:"Vertical chamber",kind:"pit",lo:275,hi:325});
+  return out;
+}
+function viewNewRun(){
+  const n=S.newRun,picked=Object.keys(n.meats);
+  let h=`<div class="row between"><h2>Start a run</h2><button class="btn ghost sm" data-act="cancelnew">Cancel</button></div>
+  <div class="card"><h3>What kind</h3>
+    <div class="chips">${Object.entries(KINDS).map(([k,v])=>`<button class="chip" data-act="kind" data-k="${k}" aria-pressed="${n.kind===k}">${v.label}</button>`).join("")}</div>`;
+  if(n.kind==="run"){
+    h+=`<h3>What's going on (pick all that apply)</h3>
+    <div class="chips">${Object.entries(MEATS).filter(([k])=>k!=="cheese").map(([k,v])=>`<button class="chip" data-act="meat" data-k="${k}" aria-pressed="${!!n.meats[k]}">${v.label}</button>`).join("")}</div>`;
+  }
+  if(n.kind==="cold")h+=`<div class="small muted">Cold smoke: only on days below about 50°F outside, so the vertical chamber stays under 90°F.</div>`;
+  if(n.kind==="testfire")h+=`<div class="small muted">No meat. Six probes across both shelves and the vertical chamber; hold 250°F at the center for 4–6 hours and log every probe hourly.</div>`;
+  h+=`</div>`;
+  picked.forEach(k=>{const m=MEATS[k],v=n.meats[k];
+    h+=`<div class="card"><div class="row between"><h3>${esc(m.label)}</h3><span class="small muted">${m.chamber} chamber${m.target?" · done "+m.target+"°F":""}</span></div>
+      <div class="grid3">
+        <label class="f">How many ${esc(m.unit)}<input class="in" inputmode="numeric" data-nr="count" data-m="${k}" value="${esc(v.count??"")}"></label>
+        <label class="f">Raw lb, total<input class="in" inputmode="decimal" data-nr="rawLb" data-m="${k}" value="${esc(v.rawLb??"")}" placeholder="all pieces"></label>
+        <label class="f">Done at °F<input class="in" inputmode="numeric" data-nr="target" data-m="${k}" value="${esc(v.target??m.target??"")}"></label>
+      </div>
+      <label class="chk"><input type="checkbox" data-nr="onNow" data-m="${k}" ${v.onNow!==false?"checked":""}> Going on now (uncheck if it goes on later)</label></div>`});
+  const nm=n.name??((n.kind==="run"&&picked.length?picked.map(k=>MEATS[k].label).join(" + "):KINDS[n.kind].label)+" · "+shortDay(dayKey()));
+  h+=`<div class="card">
+    <label class="f">Name<input class="in" data-nr="name" value="${esc(nm)}"></label>
+    <label class="f">Wood<select class="in" data-nr="wood">${WOODS.map(w=>`<option ${w===(n.wood||KINDS[n.kind].wood)?"selected":""}>${w}</option>`).join("")}</select></label>
+    <div class="small muted">Smoker probes: ${defaultPits(n.kind,picked).map(p=>esc(p.label)).join(", ")}. Meat probes are added for each meat.</div>
+    <label class="chk"><input type="checkbox" data-nr="practice" ${n.practice!==false?"checked":""}> Practice run (not for sale)</label>
+    <button class="btn primary block" data-act="startrun" ${n.kind==="run"&&!picked.length?"disabled":""}>${n.kind==="run"&&!picked.length?"Pick at least one meat":"Start · fire clock starts now"}</button></div>`;
+  return h;
+}
+function makeItem(k,v,now,n){
+  const m=MEATS[k],iid=k+"-"+uidGen().slice(-5);
+  return [iid,{n,type:k,label:m.label,chamber:m.chamber,count:numOrNull(v.count),rawLb:numOrNull(v.rawLb),target:numOrNull(v.target??m.target),
+    onAt:v.onNow===false?null:now,offAt:null,cookedLb:null,coolStart:null,
+    steps:m.steps.map(s=>({name:s[0],tip:s[1]||"",at:null})),probes:m.probes.map((l,i)=>({id:iid+"-p"+i,label:l}))}];
+}
+
+/* ---------- cooks: run detail ---------- */
+function stepRow(act,attrs,s,i){return `<li class="${s.at?"done":""}"><button data-act="${act}" ${attrs} data-i="${i}"><span class="box">${s.at?"✓":""}</span><span class="lbl"><b>${esc(s.name)}</b>${s.tip?`<small>${esc(s.tip)}</small>`:""}</span><span class="t">${s.at?hm(s.at):""}</span></button></li>`}
+function viewRun(c){
+  const live=c.status==="live",end=c.endedAt||Date.now(),t=lastTempAt(c),sp=splitsOf(c),hrs=runHours(c),all=allProbes(c),items=itemsOf(c);
+  let h=`<div class="row between"><button class="btn ghost sm" data-act="back">← All cooks</button><span class="row" style="gap:6px">${c.practice?`<span class="pill">Practice</span>`:""}${live?`<span class="pill live">Live</span>`:`<span class="pill">Done</span>`}</span></div>
+  <div><h2>${esc(c.name)}</h2><div class="small muted">${esc(KINDS[c.kind]?KINDS[c.kind].label:"Smoke run")} · ${esc(c.wood||"")} · ${sp} splits, ${(sp/hrs).toFixed(1)}/hr${c.by?" · started by "+esc(c.by):""}</div></div>
+  <div class="card">
+    <div class="row between"><div><h3>Fire time</h3><div class="clock" ${live?`data-clock="${c.startedAt}"`:""}>${dur(end-c.startedAt)}</div></div>
+    <div class="small muted" style="text-align:right">Lit ${hm(c.startedAt)}${c.endedAt?"<br>Out "+hm(c.endedAt):""}${t?"<br>Last reading "+hm(t):""}</div></div>
+    ${pitGauges(c)}
+  </div>`;
+  if(c.kind==="testfire")h+=zoneCard(c);
+  if(items.length||live){
+    h+=`<div class="card"><div class="row between"><h3>Meats</h3>${live?`<button class="btn ghost sm" data-act="additem" data-id="${c.id}">+ Add meat</button>`:""}</div>`;
+    if(S.addItem===c.id)h+=`<div class="chips">${Object.entries(MEATS).map(([k,v])=>`<button class="chip" data-act="additempick" data-id="${c.id}" data-k="${k}">${v.label}</button>`).join("")}</div><div class="small muted">Adds it as waiting. Tap it to set weight, then Put on.</div>`;
+    if(!items.length)h+=`<div class="small muted">No meat in this run.</div>`;
+    h+=`<div class="items">${items.map(it=>{const tt=itemTemp(c,it),st=itemStatus(it),next=(it.steps||[]).find(s=>!s.at);
+      const ready=it.target&&tt!=null&&!it.offAt&&tt>=it.target;
+      return `<button class="item ${st.cls}${ready?" ready":""}" data-act="openitem" data-id="${c.id}" data-iid="${it.id}">
+        <span class="grow"><b>${esc(it.label)}</b>${it.count?` <span class="muted">×${it.count}</span>`:""}${it.rawLb?` <span class="muted">· ${it.rawLb} lb</span>`:""}
+          <span class="small muted" style="display:block">${st.clock?`On <span data-clock="${st.clock}">${dur(Date.now()-st.clock)}</span>`:st.txt}${next&&!it.offAt?" · next: "+esc(next.name):""}</span></span>
+        <span class="tv"><span class="mono">${tt==null?"—":Math.round(tt)+"°F"}</span><span class="small">${it.offAt?(yieldOf(it)?yieldOf(it)+"% yield":"off"):it.target&&tt!=null?(ready?"Ready":Math.round(it.target-tt)+"° to go"):it.target?"done "+it.target+"°":""}</span></span></button>`}).join("")}</div></div>`;
+  }
+  if(live)h+=`<div class="card">
+    <h3>Log temperatures</h3>
+    <div class="grid3">${all.filter(p=>p.group==="pit"||!itemOf(c,p.item).offAt).map(p=>`<label class="f" style="--c:${PCOL[all.indexOf(p)%6]}"><span class="plbl">${esc(p.label)}</span><input class="in mono" data-probe="${esc(p.id)}" inputmode="numeric" placeholder="°F"></label>`).join("")}</div>
+    <input class="in" id="tl-note" placeholder="Note (optional)">
+    <button class="btn primary block" data-act="logtemp" data-id="${c.id}">Save reading</button>
+    <div class="row between"><h3>Wood</h3><span class="small muted mono">${sp} splits · ${(sp/hrs).toFixed(1)}/hr</span></div>
+    <div class="chips"><button class="chip wood" data-act="wood" data-id="${c.id}" data-n="1">+1 split</button><button class="chip wood" data-act="wood" data-id="${c.id}" data-n="2">+2 splits</button><button class="chip wood" data-act="wood" data-id="${c.id}" data-n="3">+3 splits</button></div>
+    <h3>Quick events</h3>
+    <div class="chips">${EVENTS.map(e=>`<button class="chip" data-act="event" data-id="${c.id}" data-e="${esc(e)}">${esc(e)}</button>`).join("")}</div>
+  </div>`;
+  if((c.runSteps||[]).length)h+=`<div class="card"><h3>${c.kind==="testfire"?"Test fire steps":"Fire steps"}</h3><ul class="steps">${c.runSteps.map((s,i)=>stepRow("runstep",`data-id="${c.id}"`,s,i)).join("")}</ul></div>`;
+  h+=chartCard(c);
+  h+=logCard(c);
+  if(live)h+=`<div class="card"><h3>Put the fire out</h3>
+    <div class="small muted">Ends the run. Any meat still on is marked off now.</div>
+    <textarea class="in" id="fc-notes" placeholder="${c.kind==="testfire"?"Hot spots, cool spots, how the fire behaved":"How the fire ran, what to change next time"}">${esc(c.notes||"")}</textarea>
+    <button class="btn primary block" data-act="finish" data-id="${c.id}">End run · stop clock</button></div>`;
+  else h+=`<div class="card"><h3>Run results</h3>
+    <div class="grid3"><div><div class="small muted">Fire hours</div><b class="num">${hrs.toFixed(1)}</b></div><div><div class="small muted">Splits</div><b class="num">${sp}</b></div><div><div class="small muted">Per hour</div><b class="num">${(sp/hrs).toFixed(1)}</b></div></div>
+    ${c.notes?`<div class="small">${esc(c.notes)}</div>`:""}
+    <button class="btn sm" data-act="reopen" data-id="${c.id}" style="align-self:flex-start">Reopen run</button></div>`;
+  h+=S.confirm==="cook:"+c.id
+    ?`<div class="card"><b>Delete this run, every meat in it and all readings?</b><div class="row"><button class="btn danger" data-act="delcook" data-id="${c.id}">Delete for good</button><button class="btn" data-act="noconfirm">Keep it</button></div></div>`
+    :`<button class="btn ghost sm" data-act="askdel" data-k="cook:${c.id}" style="align-self:flex-start;color:var(--bad)">Delete run</button>`;
+  return h;
+}
+function logCard(c,onlyItem){
+  const all=allProbes(c);
+  const log=logSorted(c).filter(e=>!onlyItem||e.item===onlyItem||(e.kind==="temp"&&e.r&&all.some(p=>p.item===onlyItem&&e.r[p.id]!=null))).reverse();
+  return `<div class="card"><h3>${onlyItem?"Readings for this meat":"Log"}</h3>${log.length?`<ul class="log">${log.map(e=>{
+    let body;
+    if(e.kind==="temp")body=all.filter(p=>e.r&&e.r[p.id]!=null&&(!onlyItem||p.item===onlyItem)).map(p=>esc(p.label)+" "+e.r[p.id]).join(" · ")+"°F"+(e.note?" — "+esc(e.note):"");
+    else if(e.kind==="wood")body=`+${e.n} split${e.n>1?"s":""}`;
+    else if(e.kind==="hold"||e.kind==="cool"){const it=itemOf(c,e.item);body=(it&&!onlyItem?esc(it.label)+": ":"")+(e.kind==="hold"?`Hot hold ${e.temp}°F${e.temp<135?' <b style="color:var(--bad)">below 135</b>':""}`:`Cooling ${e.temp}°F`)}
+    else body=esc(e.note);
+    if(e.by)body+=`<span class="by">${esc(e.by)}</span>`;
+    return `<li><span class="t">${hm(e.at)}</span><span>${body}</span>${onlyItem?"<span></span>":`<button class="btn ghost sm" data-act="dellog" data-id="${c.id}" data-lid="${esc(e.id)}" aria-label="Remove entry">✕</button>`}</li>`}).join("")}</ul>`:`<div class="muted small">No readings yet. Log every probe each hour, plus splits added.</div>`}</div>`;
+}
+
+/* ---------- cooks: one meat ---------- */
+function viewItem(c,it){
+  const live=c.status==="live",tt=itemTemp(c,it),st=itemStatus(it),r=lastReadings(c),all=allProbes(c);
+  let h=`<div class="row between"><button class="btn ghost sm" data-act="backrun">← ${esc(c.name)}</button><span class="pill ${it.onAt&&!it.offAt?"live":""}">${it.onAt?(it.offAt?"Off":"On"):"Waiting"}</span></div>
+  <div><h2>${esc(it.label)}</h2><div class="small muted">${esc(it.chamber)} chamber${it.count?" · "+it.count+" "+esc((MEATS[it.type]||MEATS.other).unit):""}${it.rawLb?" · "+it.rawLb+" lb raw":""}${it.target?" · done at "+it.target+"°F":""}</div></div>
+  <div class="card">
+    <div class="row between"><div><h3>${it.onAt?"Time on":"Not on yet"}</h3><div class="clock" ${st.clock?`data-clock="${st.clock}"`:""}>${it.onAt?dur((it.offAt||Date.now())-it.onAt):"—"}</div></div>
+    <div class="small muted" style="text-align:right">${it.onAt?"On "+hm(it.onAt):""}${it.offAt?"<br>Off "+hm(it.offAt):""}</div></div>
+    ${(it.probes||[]).length?`<div class="gauges">${it.probes.map(p=>gauge(p.label,r[p.id],"",PCOL[all.findIndex(q=>q.id===p.id)%6])).join("")}</div>`:""}
+    ${it.target&&tt!=null&&!it.offAt?`<div class="small">${tt>=it.target?`<b style="color:var(--ok)">At ${it.target}°F.</b> Check for probe-tender before pulling.`:`<b>${Math.round(it.target-tt)}°F</b> to go on the coolest probe`}</div>`:""}
+    ${live?`<div class="row">${!it.onAt?`<button class="btn primary grow" data-act="puton" data-id="${c.id}" data-iid="${it.id}">Put on now</button>`:!it.offAt?`<button class="btn primary grow" data-act="takeoff" data-id="${c.id}" data-iid="${it.id}">Take off now</button>`:`<button class="btn sm" data-act="backon" data-id="${c.id}" data-iid="${it.id}">Undo take off</button>`}</div>`:""}
+  </div>`;
+  if((it.steps||[]).length)h+=`<div class="card"><h3>Steps</h3><ul class="steps">${it.steps.map((s,i)=>stepRow("step",`data-id="${c.id}" data-iid="${it.id}"`,s,i)).join("")}</ul></div>`;
+  h+=`<div class="card"><h3>Details</h3>
+    <div class="grid3">
+      <label class="f">How many<input class="in" inputmode="numeric" data-it="count" data-id="${c.id}" data-iid="${it.id}" value="${it.count??""}"></label>
+      <label class="f">Raw lb, total<input class="in" inputmode="decimal" data-it="rawLb" data-id="${c.id}" data-iid="${it.id}" value="${it.rawLb??""}"></label>
+      <label class="f">Cooked lb, total<input class="in" inputmode="decimal" data-it="cookedLb" data-id="${c.id}" data-iid="${it.id}" value="${it.cookedLb??""}" placeholder="after rest"></label>
+      <label class="f">Done at °F<input class="in" inputmode="numeric" data-it="target" data-id="${c.id}" data-iid="${it.id}" value="${it.target??""}"></label>
+    </div>
+    <label class="f">Meat probes, one per line<textarea class="in" rows="${Math.max(2,(it.probes||[]).length)}" data-it="probes" data-id="${c.id}" data-iid="${it.id}">${(it.probes||[]).map(p=>esc(p.label)).join("\n")}</textarea></label>
+    ${yieldOf(it)?`<div class="small">Yield <b>${yieldOf(it)}%</b> (plan: brisket ~50%, pork and poultry ~60%)</div>`:""}
+  </div>`;
+  if(it.type!=="cheese")h+=safetyCard(c,it);
+  h+=logCard(c,it.id);
+  h+=S.confirm==="item:"+it.id
+    ?`<div class="card"><b>Remove ${esc(it.label)} from this run?</b><div class="row"><button class="btn danger" data-act="delitem" data-id="${c.id}" data-iid="${it.id}">Remove</button><button class="btn" data-act="noconfirm">Keep it</button></div></div>`
+    :`<button class="btn ghost sm" data-act="askdel" data-k="item:${it.id}" style="align-self:flex-start;color:var(--bad)">Remove from run</button>`;
+  return h;
+}
+function safetyCard(c,it){
+  const mine=logSorted(c).filter(e=>e.item===it.id),holds=mine.filter(e=>e.kind==="hold"),cools=mine.filter(e=>e.kind==="cool");
+  let h=`<div class="card"><h3>Holding & cooling</h3>`;
+  const lastHold=holds[holds.length-1];
+  if(lastHold)h+=`<div class="status ${lastHold.temp>=135?"good":"bad"}"><span><b>Hot hold ${lastHold.temp}°F at ${hm(lastHold.at)}</b>${lastHold.temp>=135?"At or above 135°F.":"Below 135°F. Reheat to 165°F or start cooling now."}</span></div>`;
+  h+=`<div class="row"><input class="in mono" id="hold-t" inputmode="numeric" placeholder="Holding temp °F" style="flex:1;min-width:0"><button class="btn" data-act="hold" data-id="${c.id}" data-iid="${it.id}">Log hold</button></div>`;
+  if(it.coolStart){
+    const now=Date.now(),d70=it.coolStart+2*3600000,d41=it.coolStart+6*3600000;
+    const c70=cools.find(e=>e.temp<=70),c41=cools.find(e=>e.temp<=41);
+    const st=(hit,dl,lbl)=>hit?(hit.at<=dl?`<div class="status good"><span><b>${lbl} reached ${hm(hit.at)}</b>On time (by ${hm(dl)})</span></div>`:`<div class="status bad"><span><b>${lbl} reached late, ${hm(hit.at)}</b>Deadline was ${hm(dl)}. Discard or reheat to 165°F and serve.</span></div>`)
+      :(now>dl?`<div class="status bad"><span><b>${lbl} missed (deadline ${hm(dl)})</b>Discard or reheat to 165°F and serve.</span></div>`:`<div class="status warn"><span><b>${lbl} by ${hm(dl)}</b>${dur(dl-now)} left</span></div>`);
+    h+=`<div class="small muted">Cooling started ${hm(it.coolStart)}</div>${st(c70,d70,"70°F")}${c70||now<=d70?st(c41,d41,"41°F"):""}
+    <div class="row"><input class="in mono" id="cool-t" inputmode="numeric" placeholder="Cooling temp °F" style="flex:1;min-width:0"><button class="btn" data-act="cool" data-id="${c.id}" data-iid="${it.id}">Log</button></div>`;
+  } else h+=`<button class="btn" data-act="coolstart" data-id="${c.id}" data-iid="${it.id}" style="align-self:flex-start">Start cooling leftovers</button>
+    <div class="small muted">Rule: 135°F to 70°F within 2 hours, then to 41°F within 4 more. Shallow pans and ice baths.</div>`;
+  return h+`</div>`;
+}
+
+/* ---------- charts ---------- */
+function zoneCard(c){
+  const pts=(c.log||[]).filter(e=>e.kind==="temp"&&e.r);if(!pts.length)return"";
+  const avg={},n={};pts.forEach(e=>{for(const k in e.r)if(e.r[k]!=null){avg[k]=(avg[k]||0)+e.r[k];n[k]=(n[k]||0)+1}});
+  for(const k in avg)avg[k]/=n[k];
+  const shade=v=>{if(v==null)return"var(--chip)";const d=v-250;return d>15?"var(--bad)":d<-15?"var(--smoke)":"var(--ok)"};
+  const cell=(id,lbl)=>`<div style="background:${shade(avg[id])}">${avg[id]==null?"—":Math.round(avg[id])}<small>${lbl}</small></div>`;
+  return `<div class="card"><h3>Zone map · average of every reading</h3>
+    <div class="small muted">Firebox is on the right. Green is within 15°F of 250, red runs hot, blue runs cool.</div>
+    <div class="zone">${cell("UL","Upper L")}<div style="background:var(--chip);color:var(--muted)">·<small>Upper C</small></div>${cell("UR","Upper R")}${cell("LL","Lower L")}${cell("LC","Lower C")}${cell("LR","Lower R")}</div>
+    <div class="zone" style="grid-template-columns:1fr">${cell("V","Vertical chamber")}</div></div>`;
+}
+function chartCard(c){
+  const pts=logSorted(c).filter(e=>e.kind==="temp"&&e.r);
+  if(pts.length<2)return"";
+  const pr=allProbes(c);
+  const W=340,H=190,L=34,R=8,T=10,B=24;
+  const t0=c.startedAt,t1=Math.max(pts[pts.length-1].at,t0+60000);
+  const vals=[];pts.forEach(p=>{for(const k in p.r)if(p.r[k]!=null)vals.push(p.r[k])});
+  if(!vals.length)return"";
+  let lo=Math.floor(Math.min(...vals)/25)*25,hi=Math.ceil(Math.max(...vals)/25)*25;if(hi===lo)hi+=25;
+  const x=t=>L+(t-t0)/(t1-t0)*(W-L-R),y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  const step=(hi-lo)>200?50:25;let g="";
+  for(let v=lo;v<=hi;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-5}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v}</text>`;
+  const hrs=(t1-t0)/3600000,hs=hrs>8?2:1;
+  for(let hh=0;hh<=hrs+0.001;hh+=hs)g+=`<text x="${x(t0+hh*3600000)}" y="${H-6}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${hh}h</text>`;
+  const p0=(c.pitProbes||[]).find(p=>p.kind==="pit"&&p.hi);let band="";
+  if(p0){const a=Math.min(hi,Math.max(lo,p0.hi)),b=Math.min(hi,Math.max(lo,p0.lo||lo));if(a>b)band=`<rect x="${L}" width="${W-L-R}" y="${y(a)}" height="${y(b)-y(a)}" fill="var(--ok)" opacity=".12"/>`}
+  const lines=pr.map((p,i)=>{const q=pts.filter(e=>e.r[p.id]!=null);if(!q.length)return"";const col=PCOL[i%6];
+    return `<polyline fill="none" stroke="${col}" stroke-width="2.25" stroke-linejoin="round" points="${q.map(e=>x(e.at).toFixed(1)+","+y(e.r[p.id]).toFixed(1)).join(" ")}"/><circle cx="${x(q[q.length-1].at)}" cy="${y(q[q.length-1].r[p.id])}" r="3.5" fill="${col}"/>`}).join("");
+  const used=pr.filter(p=>pts.some(e=>e.r[p.id]!=null));
+  return `<div class="card"><h3>Temperature over time</h3>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Probe temperature chart">${band}${g}${lines}</svg>
+    <div class="legend">${used.map(p=>`<span><i style="background:${PCOL[pr.indexOf(p)%6]}"></i>${esc(p.label)}</span>`).join("")}${band?`<span><i style="background:var(--ok);opacity:.35;height:8px"></i>${esc(p0.label)} range</span>`:""}</div></div>`;
+}
+function tickClocks(){document.querySelectorAll("[data-clock]").forEach(el=>el.textContent=dur(Date.now()-Number(el.dataset.clock)))}
+
+/* ---------- stock ---------- */
+function viewStock(){
+  let h=`<div class="row between"><h2>Inventory</h2><button class="btn primary" data-act="invadd">+ Add item</button></div>`;
+  if(S.invAdd||S.editInv){
+    const it=S.editInv?S.inv.find(i=>i.id===S.editInv)||{}:{};
+    h+=`<div class="card"><h3>${S.editInv?"Edit item":"New item"}</h3>
+      <label class="f">Item<input class="in" id="iv-name" value="${esc(it.name||"")}" placeholder="e.g. Oregon white oak splits"></label>
+      <div class="grid3"><label class="f">On hand<input class="in" id="iv-qty" inputmode="decimal" value="${it.qty??""}"></label>
+      <label class="f">Unit<input class="in" id="iv-unit" value="${esc(it.unit||"")}" placeholder="lb, each"></label>
+      <label class="f">Reorder at<input class="in" id="iv-low" inputmode="decimal" value="${it.low??""}"></label></div>
+      <div class="grid2"><label class="f">Group<input class="in" id="iv-cat" list="cats" value="${esc(it.cat||"")}" placeholder="Wood, Meat, Supplies"><datalist id="cats">${[...new Set(S.inv.map(i=>i.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist></label>
+      <label class="f">Cost per unit<input class="in" id="iv-cost" inputmode="decimal" value="${it.cost??""}" placeholder="$ (optional)"></label></div>
+      <div class="row"><button class="btn primary grow" data-act="invsave">Save</button><button class="btn" data-act="invcancel">Cancel</button></div>
+      ${S.editInv?(S.confirm==="inv:"+S.editInv?`<div class="row"><button class="btn danger" data-act="invdel">Delete item</button><button class="btn" data-act="noconfirm">Keep</button></div>`:`<button class="btn ghost sm" style="color:var(--bad);align-self:flex-start" data-act="askdel" data-k="inv:${S.editInv}">Delete item</button>`):""}
+    </div>`;
+  }
+  if(!S.inv.length)return h+`<div class="empty"><p>No items yet. Load the plan's shopping list (wood, meat, rub and sauce ingredients, sides, supplies) with counts at zero, then count what you have.</p><button class="btn" data-act="starterinv">Load starter list</button></div>`;
+  const low=S.inv.filter(i=>i.low!=null&&(+i.qty||0)<=i.low);
+  const value=S.inv.reduce((a,i)=>a+(i.cost?(+i.qty||0)*i.cost:0),0);
+  h+=`<div class="row between small"><span>${low.length?`<b style="color:var(--bad)">${low.length} to reorder</b>`:"Nothing low"}</span>${value?`<span class="muted">Stock on hand ≈ <b class="num">${money(value)}</b></span>`:""}</div>`;
+  const groups={};S.inv.forEach(i=>(groups[i.cat||"Other"]=groups[i.cat||"Other"]||[]).push(i));
+  const order=["Wood","Meat","Rub & sauce","Sides","Supplies"];
+  Object.keys(groups).sort((a,b)=>((order.indexOf(a)+1)||99)-((order.indexOf(b)+1)||99)||a.localeCompare(b)).forEach(g=>{
+    h+=`<div class="card"><h3>${esc(g)}</h3><div class="inv">${groups[g].sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(i=>{
+      const isLow=i.low!=null&&(+i.qty||0)<=i.low;
+      return `<div class="it ${isLow?"low":""}"><button class="nm" data-act="invedit" data-id="${i.id}"><b>${esc(i.name)}</b><span>${esc(i.unit||"")}${i.low!=null?" · reorder at "+i.low:""}${i.cost?" · "+money(i.cost):""}${isLow?' · <span class="flag">Low</span>':""}</span></button>
+      <div class="qty"><button data-act="dq" data-id="${i.id}" data-d="-1" aria-label="One less">−</button><span class="q">${+(+i.qty||0).toFixed(2)}</span><button data-act="dq" data-id="${i.id}" data-d="1" aria-label="One more">+</button></div></div>`}).join("")}</div></div>`});
+  return h;
+}
+
+/* ---------- sales ---------- */
+function dayLines(k){const out=[];S.sales.filter(s=>s.day===k).forEach(s=>(s.lines||[]).forEach(l=>out.push({...l,doc:s.id})));return out.sort((a,b)=>a.at-b.at)}
+function dayMoney(k){
+  const lines=dayLines(k),sales=lines.reduce((a,l)=>a+l.qty*l.price,0),card=lines.filter(l=>l.pay==="Card").reduce((a,l)=>a+l.qty*l.price,0);
+  const c=S.costs[k]||{};const venue=c.venuePct!=null?sales*c.venuePct/100:(c.venue||0);
+  const cardFee=card*((c.cardPct??3)/100),costs=venue+(c.food||0)+(c.wood||0)+(c.other||0)+cardFee;
+  return {sales,card,venue,cardFee,costs,net:sales-costs,c};
+}
+function saleDocId(){return dayKey()+"_"+dev()}
+function viewSales(){
+  const k=dayKey(),lines=dayLines(k),m=dayMoney(k);
+  const byPay={};lines.forEach(l=>byPay[l.pay]=(byPay[l.pay]||0)+l.qty*l.price);
+  let h="";
+  if(!S.sales.length)h+=`<div class="note">The plan: no sales until the Lane County license is in hand. Set up the menu now and use this on event days.</div>`;
+  h+=`<div class="card"><div class="row between"><div><h3>Today · ${fmtDay(k)}</h3><div class="big num">${money(m.sales)}</div></div>
+    <div class="small muted" style="text-align:right">${lines.length} sale${lines.length===1?"":"s"}${Object.entries(byPay).map(([p,v])=>`<br>${esc(p)} ${money(v)}`).join("")}</div></div>
+    <label class="f">Where are you selling?<input class="in" id="sl-place" value="${esc(S.place)}" placeholder="e.g. Ninkasi patio, Park Blocks"></label></div>`;
+  h+=`<div class="card"><div class="row between"><h3>Tap to ring up</h3><div class="chips">${["Card","Cash","Venmo"].map(p=>`<button class="chip" data-act="pay" data-p="${p}" aria-pressed="${S.pay===p}">${p}</button>`).join("")}</div></div>`;
+  if(!S.menu.length)h+=`<div class="empty"><p>No menu yet. Load the plan's sample menu and prices ($14 sandwich to $26 brisket plate), then adjust.</p><button class="btn" data-act="startermenu">Load sample menu</button></div>`;
+  else h+=`<div class="menu">${S.menu.slice().sort((a,b)=>(a.price||0)-(b.price||0)).map(mm=>`<button class="${mm.price?"":"noprice"}" data-act="sell" data-id="${mm.id}"><b>${esc(mm.name)}</b><span>${mm.price?money(mm.price)+(mm.unit&&mm.unit!=="each"?" / "+esc(mm.unit):""):"Set price"}</span></button>`).join("")}</div>`;
+  h+=`<button class="btn ghost sm" data-act="menutoggle" style="align-self:flex-start">${S.menuOpen?"Hide menu & prices":"Edit menu & prices"}</button>`;
+  if(S.menuOpen)h+=viewMenuEdit();
+  h+=`</div>`;
+  if(S.weigh){const mm=S.menu.find(x=>x.id===S.weigh);if(mm)h+=`<div class="card"><h3>${esc(mm.name)} · ${money(mm.price)} / ${esc(mm.unit)}</h3>
+    <label class="f">How many ${esc(mm.unit)}?<input class="in mono" id="wg" inputmode="decimal" placeholder="e.g. 1.25"></label>
+    <div class="row"><button class="btn primary grow" data-act="sellw">Add sale</button><button class="btn" data-act="weighcancel">Cancel</button></div></div>`}
+  h+=`<div class="card"><div class="row between"><h3>Today's costs & take-home</h3><button class="btn ghost sm" data-act="costtoggle">${S.costOpen?"Done":"Edit costs"}</button></div>
+    <div class="kv"><span>Sales</span><span class="r">${money(m.sales)}</span>
+    <span>Venue fee${m.c.venuePct!=null?` (${m.c.venuePct}%)`:""}</span><span class="r">${money(-m.venue)}</span>
+    <span>Food & packaging</span><span class="r">${money(-(m.c.food||0))}</span>
+    <span>Wood</span><span class="r">${money(-(m.c.wood||0))}</span>
+    <span>Card fees (${m.c.cardPct??3}% of card)</span><span class="r">${money(-m.cardFee)}</span>
+    ${m.c.other?`<span>Other</span><span class="r">${money(-m.c.other)}</span>`:""}
+    <span class="tot">Left for Max & Ben</span><span class="r tot">${money(m.net)}</span></div>`;
+  if(S.costOpen)h+=`<div class="grid2">
+      <label class="f">Venue fee %<input class="in mono" id="co-vp" inputmode="decimal" value="${m.c.venuePct??""}" placeholder="e.g. 10"></label>
+      <label class="f">or flat venue $<input class="in mono" id="co-v" inputmode="decimal" value="${m.c.venuePct==null?(m.c.venue??""):""}"></label>
+      <label class="f">Food & packaging $<input class="in mono" id="co-f" inputmode="decimal" value="${m.c.food??""}"></label>
+      <label class="f">Wood $<input class="in mono" id="co-w" inputmode="decimal" value="${m.c.wood??""}"></label>
+      <label class="f">Card fee %<input class="in mono" id="co-cp" inputmode="decimal" value="${m.c.cardPct??3}"></label>
+      <label class="f">Other $<input class="in mono" id="co-o" inputmode="decimal" value="${m.c.other??""}"></label></div>
+      <button class="btn primary" data-act="costsave">Save costs</button>`;
+  h+=`</div>`;
+  h+=`<div class="card"><h3>Today's sales</h3>${lines.length?`<ul class="lines">${lines.slice().reverse().map(l=>`<li><span class="mono small muted">${hm(l.at)}</span><span class="grow">${esc(l.name)}${l.qty!==1?` <span class="muted">× ${l.qty}</span>`:""}<br><span class="small muted">${esc(l.pay)}${l.place?" · "+esc(l.place):""}${l.by?" · "+esc(l.by):""}</span></span><b class="num">${money(l.qty*l.price)}</b>${l.doc===saleDocId()?`<button class="btn ghost sm" data-act="unsell" data-lid="${esc(l.id)}" aria-label="Remove sale">✕</button>`:""}</li>`).join("")}</ul>`:`<div class="muted small">No sales yet today.</div>`}</div>`;
+  return h;
+}
+function viewMenuEdit(){
+  let h=`<div class="inv">`;
+  S.menu.slice().sort((a,b)=>(a.price||0)-(b.price||0)).forEach(m=>{
+    h+=`<div class="it"><span class="grow"><b>${esc(m.name)}</b><br><span class="small muted">per ${esc(m.unit||"each")}</span></span>
+    <input class="in mono" style="width:92px" inputmode="decimal" data-price="${m.id}" value="${m.price||""}" placeholder="$" aria-label="Price for ${esc(m.name)}">
+    ${S.confirm==="menu:"+m.id?`<button class="btn danger sm" data-act="menudel" data-id="${m.id}">Delete</button>`:`<button class="btn ghost sm" data-act="askdel" data-k="menu:${m.id}" aria-label="Delete ${esc(m.name)}">✕</button>`}</div>`});
+  h+=`</div><div class="grid3"><input class="in" id="mn-name" placeholder="New item" style="grid-column:span 2"><input class="in mono" id="mn-price" inputmode="decimal" placeholder="Price"></div>
+  <div class="row"><select class="in grow" id="mn-unit"><option value="each">Priced each</option><option value="lb">Priced per lb</option></select><button class="btn primary" data-act="menuadd">Add</button></div>`;
+  return h;
+}
+function addSale(m,qty){
+  if(!m.price){S.menuOpen=true;render(true);toast("Set a price for "+m.name+" first");return}
+  const line={id:uidGen(),name:m.name,qty,price:m.price,unit:m.unit||"each",pay:S.pay,place:S.place,at:Date.now(),by:who()};
+  Store.op({op:"push",c:"sales",id:saleDocId(),field:"lines",value:line,init:{day:dayKey(),dev:dev(),lines:[]}});
+  toast("Added "+m.name+" · "+money(qty*m.price));
+}
+
+/* ---------- summary ---------- */
+function allLines(){const out=[];S.sales.forEach(s=>(s.lines||[]).forEach(l=>out.push({...l,day:s.day})));return out}
+function viewSummary(){
+  const L=allLines(),days=[...new Set(L.map(l=>l.day).concat(Object.keys(S.costs)))].sort().reverse();
+  const dm={};days.forEach(d=>dm[d]=dayMoney(d));
+  const show=days.slice(0,14),max=Math.max(1,...show.map(d=>dm[d].sales));
+  const total=days.reduce((a,d)=>a+dm[d].sales,0),net=days.reduce((a,d)=>a+dm[d].net,0);
+  const byItem={};L.forEach(l=>{const o=byItem[l.name]=byItem[l.name]||{q:0,v:0,u:l.unit};o.q+=l.qty;o.v+=l.qty*l.price});
+  const done=S.cooks.filter(c=>c.status!=="live"&&c.endedAt),byMeat={},byKind={};
+  done.forEach(c=>{
+    const k=byKind[c.kind]=byKind[c.kind]||{n:0,h:0,sp:0};k.n++;k.h+=runHours(c);k.sp+=splitsOf(c);
+    itemsOf(c).forEach(it=>{if(!it.onAt||!it.offAt)return;const o=byMeat[it.type]=byMeat[it.type]||{n:0,h:0,y:[],lb:0};o.n++;o.h+=(it.offAt-it.onAt)/3600000;o.lb+=it.cookedLb||0;if(yieldOf(it))o.y.push(yieldOf(it))})});
+  let h=`<h2>Totals</h2><div class="grid3">
+    <div class="card"><h3>Sales</h3><b class="big num" style="font-size:26px">${money(total)}</b></div>
+    <div class="card"><h3>Take-home</h3><b class="big num" style="font-size:26px">${money(net)}</b></div>
+    <div class="card"><h3>Runs done</h3><b class="big num" style="font-size:26px">${done.length}</b></div></div>`;
+  h+=`<div class="card"><h3>Sales by day</h3>${show.length?`<div class="bars">${show.map(d=>`<div class="bar"><span class="small">${shortDay(d)}</span><div class="tr"><div class="fl" style="width:${dm[d].sales/max*100}%"></div></div><span class="num small" style="text-align:right">${money(dm[d].sales)}</span></div>`).join("")}</div>
+    <div class="scroll"><table class="t"><thead><tr><th>Day</th><th class="r">Sales</th><th class="r">Costs</th><th class="r">Take-home</th></tr></thead><tbody>${show.map(d=>`<tr><td>${shortDay(d)}</td><td class="r">${money(dm[d].sales)}</td><td class="r">${money(dm[d].costs)}</td><td class="r">${money(dm[d].net)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="muted small">Event days show here once sales are rung up. The plan's model day: $2,700 sales, $1,329 left for Max and Ben.</div>`}</div>`;
+  const items=Object.entries(byItem).sort((a,b)=>b[1].v-a[1].v);
+  if(items.length)h+=`<div class="card"><h3>Best sellers</h3><div class="scroll"><table class="t"><thead><tr><th>Item</th><th class="r">Sold</th><th class="r">Revenue</th></tr></thead><tbody>${items.map(([n,o])=>`<tr><td>${esc(n)}</td><td class="r">${+o.q.toFixed(2)}${o.u==="each"?"":" "+esc(o.u)}</td><td class="r">${money(o.v)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  const meats=Object.entries(byMeat);
+  h+=`<div class="card"><h3>By meat</h3>${meats.length?`<div class="scroll"><table class="t"><thead><tr><th>Meat</th><th class="r">Cooks</th><th class="r">Avg hr on</th><th class="r">Yield</th><th class="r">Cooked lb</th></tr></thead><tbody>${meats.map(([k,o])=>`<tr><td>${esc((MEATS[k]||{}).label||k)}</td><td class="r">${o.n}</td><td class="r">${(o.h/o.n).toFixed(1)}</td><td class="r">${o.y.length?Math.round(o.y.reduce((a,b)=>a+b,0)/o.y.length)+"%":"—"}</td><td class="r">${+o.lb.toFixed(1)}</td></tr>`).join("")}</tbody></table></div>
+    <div class="small muted">Plan yields to compare: brisket about 50%, pork and chicken about 60%.</div>`:`<div class="muted small">Each meat's average time on the smoker and yield show here once it comes off with a cooked weight.</div>`}</div>`;
+  const kinds=Object.entries(byKind);
+  h+=`<div class="card"><h3>Fires</h3>${kinds.length?`<div class="scroll"><table class="t"><thead><tr><th>Kind</th><th class="r">Runs</th><th class="r">Avg fire hr</th><th class="r">Splits/hr</th></tr></thead><tbody>${kinds.map(([k,o])=>`<tr><td>${esc((KINDS[k]||{}).label||k)}</td><td class="r">${o.n}</td><td class="r">${(o.h/o.n).toFixed(1)}</td><td class="r">${o.h?(o.sp/o.h).toFixed(1):"—"}</td></tr>`).join("")}</tbody></table></div>`:`<div class="muted small">Wood burned per hour of fire shows here. With the hot and cool zone map, it's one of the two numbers the plan says every later plan depends on.</div>`}</div>`;
+  h+=`<div class="card"><h3>Export for records</h3><div class="small muted">Spreadsheet files (CSV), saved to your phone's Downloads folder. The shared Google Sheet also has readable Sales, Cooks and Stock tabs.</div>
+    <div class="row"><button class="btn" data-act="csv" data-k="sales">Sales</button><button class="btn" data-act="csv" data-k="cooks">Cooks</button><button class="btn" data-act="csv" data-k="temps">Temp log</button><button class="btn" data-act="csv" data-k="inv">Inventory</button></div></div>`;
+  return h;
+}
+function csv(rows){return rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")).join("\n")}
+function exportCsv(k){
+  let rows;
+  const dt=ms=>ms?new Date(ms).toLocaleString():"";
+  if(k==="sales")rows=[["date","time","item","qty","unit","price","total","payment","place","by"]].concat(allLines().sort((a,b)=>a.at-b.at).map(l=>[l.day,hm(l.at),l.name,l.qty,l.unit,l.price,(l.qty*l.price).toFixed(2),l.pay,l.place,l.by]));
+  else if(k==="cooks"){rows=[["run","kind","practice","wood","fire_lit","fire_out","fire_hours","splits","meat","count","on","off","hours_on","raw_lb","cooked_lb","yield_pct","run_notes"]];
+    S.cooks.forEach(c=>{const base=[c.name,c.kind,c.practice?"yes":"no",c.wood,dt(c.startedAt),dt(c.endedAt),c.endedAt?runHours(c).toFixed(2):"",splitsOf(c)];
+      const its=itemsOf(c).length?itemsOf(c):[null];
+      its.forEach(it=>rows.push(base.concat(it?[it.label,it.count,dt(it.onAt),dt(it.offAt),it.onAt&&it.offAt?((it.offAt-it.onAt)/3600000).toFixed(2):"",it.rawLb,it.cookedLb,yieldOf(it)]:["","","","","","","",""]).concat([c.notes])))})}
+  else if(k==="temps"){rows=[["run","date","time","kind","probe","temp_f","note","by"]];S.cooks.forEach(c=>{const pr=allProbes(c);logSorted(c).forEach(e=>{const d=dayKey(new Date(e.at));
+    if(e.kind==="temp"&&e.r)pr.forEach(p=>{if(e.r[p.id]!=null)rows.push([c.name,d,hm(e.at),"reading",p.label,e.r[p.id],e.note||"",e.by||""])});
+    else if(e.kind==="hold"||e.kind==="cool"){const it=itemOf(c,e.item);rows.push([c.name,d,hm(e.at),e.kind==="hold"?"hot hold":"cooling",it?it.label:"",e.temp,"",e.by||""])}
+    else rows.push([c.name,d,hm(e.at),e.kind,"","",e.kind==="wood"?e.n+" splits":e.note,e.by||""])})})}
+  else rows=[["item","group","on_hand","unit","reorder_at","cost_per_unit"]].concat(S.inv.map(i=>[i.name,i.cat,i.qty,i.unit,i.low,i.cost]));
+  const name="davis-smoker-"+k+"-"+dayKey()+".csv",data=csv(rows);
+  if(NATIVE&&NATIVE.saveFile){try{toast(NATIVE.saveFile(name,"text/csv",data))}catch(e){toast("Couldn't save the file")}return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"text/csv"}));a.download=name;document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ---------- prep ---------- */
+function viewPrep(){
+  let h=`<h2>Getting ready</h2>`;
+  const items=(S.plan&&S.plan.items)||[];
+  if(!items.length)h+=`<div class="empty"><p>The checklist comes from the shared Google Sheet. It shows here after the first sync.</p></div>`;
+  else{const dn=items.filter(i=>i.at).length;
+    h+=`<div class="card"><div class="row between"><h3>Next steps</h3><span class="small muted">${dn} of ${items.length} done</span></div>
+    <ul class="steps">${items.map((s,i)=>`<li class="${s.at?"done":""}"><button data-act="plan" data-i="${i}"><span class="box">${s.at?"✓":""}</span><span class="lbl"><b>${esc(s.t)}</b>${s.by&&s.at?`<small>${esc(s.by)}</small>`:""}</span><span class="t">${s.at?shortDay(dayKey(new Date(s.at))):""}</span></button></li>`).join("")}</ul></div>`}
+  h+=`<div class="card"><h3>Lane County Environmental Health</h3>
+    <div><span class="sel">(541) 682-4051</span> <button class="btn ghost sm" data-act="copy" data-v="(541) 682-4051">Copy</button></div>
+    <div class="small">151 W. 7th Ave, Eugene</div>
+    <div class="small muted">Questions to ask before buying any equipment:</div>
+    <ol class="small" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">${COUNTY_QS.map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>
+  <div class="card"><h3>Food safety rules</h3>
+    <div class="kv small"><span>Hot holding</span><span class="r mono">135°F+</span><span>Cool 135 → 70°F</span><span class="r mono">2 hr</span><span>Then 70 → 41°F</span><span class="r mono">4 hr</span><span>Reheat leftovers</span><span class="r mono">165°F</span><span>Chicken & turkey breast</span><span class="r mono">165°F</span><span>Cold-smoke chamber</span><span class="r mono">under 90°F</span></div></div>
+  <div class="card"><h3>Wood</h3><div class="small">Oregon white oak for beef and pork. Apple or cherry for pork, ribs and poultry. Red alder for poultry and cheese. Never fir, pine, cedar or other softwoods, painted lumber or pallets.</div></div>`;
+  return h;
+}
+
+/* ---------- settings ---------- */
+function viewSettings(){
+  const cfg=Store.cfg(),st=Store.status(),w=cfg.who||"";
+  const custom=w&&!PEOPLE.includes(w);
+  let state;
+  if(!cfg.url)state=`<div class="status warn"><span><b>Not shared yet</b>Everything saves on this phone only. Paste the Google Sheet link below to share with the others.</span></div>`;
+  else if(st.state==="err")state=`<div class="status bad"><span><b>Can't reach the Sheet${st.waiting?` · ${st.waiting} change${st.waiting>1?"s":""} waiting`:""}</b>${esc(st.error)} Changes are kept on this phone and sent when it connects.</span></div>`;
+  else if(st.state==="busy")state=`<div class="status warn"><span><b>Syncing…</b>${st.waiting?st.waiting+" change"+(st.waiting>1?"s":"")+" to send":""}</span></div>`;
+  else state=`<div class="status good"><span><b>Shared${st.waiting?` · ${st.waiting} waiting`:""}</b>${st.last?"Last synced "+ago(st.last)+".":"Connecting…"}</span></div>`;
+  return `<div class="row between"><h2>Settings</h2><button class="btn ghost sm" data-act="closesettings">Done</button></div>
+  <div class="card"><h3>Who uses this phone</h3>
+    <div class="chips">${PEOPLE.map(p=>`<button class="chip" data-act="who" data-v="${p}" aria-pressed="${w===p}">${p}</button>`).join("")}</div>
+    <label class="f">Someone else<input class="in" id="who-other" value="${custom?esc(w):""}" placeholder="Name"></label>
+    <div class="small muted">Readings, sales and checklist ticks are tagged with this name.</div></div>
+  <div class="card"><h3>Shared Google Sheet</h3>
+    ${state}
+    <label class="f">Sheet link (the Web app URL)<input class="in" id="sheet-url" value="${esc(S.urlDraft??cfg.url??"")}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+    <div class="row"><button class="btn primary grow" data-act="saveurl">Save & connect</button>${cfg.url?`<button class="btn" data-act="syncnow">Sync now</button>`:""}</div>
+    ${cfg.url?`<button class="btn" data-act="copyurl">Copy link to text Max and Ben</button><div class="small muted">They paste it into this same box on their phones. Anyone with the link can see and change the log, so only send it to family.</div>`:`<div class="small muted">Set up the Sheet once (Chuck's phone), then text the link to the others.</div>`}
+  </div>
+  <div class="card"><h3>About</h3><div class="small muted">Davis Smoker ${esc(APP_VERSION)} · this phone's ID ${esc(cfg.dev)}</div></div>`;
+}
+
+/* ---------- actions ---------- */
+const val=id=>{const el=document.getElementById(id);return el?el.value.trim():""};
+function copyText(t){
+  if(NATIVE&&NATIVE.copy){NATIVE.copy(t);toast("Copied");return}
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Copied"),()=>toast("Couldn't copy. Select the text instead."));
+}
+document.addEventListener("click",e=>{
+  const tb=e.target.closest("nav.tabs button");
+  if(tb){if(S.tab===tb.dataset.tab){S.cook=null;S.item=null;S.newRun=null;render(true);window.scrollTo(0,0)}else location.hash=tb.dataset.tab;return}
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act,id=b.dataset.id,iid=b.dataset.iid;
+  const c=id?cookById(id):null;
+  switch(a){
+    case "settings":S.prevTab=S.tab==="settings"?S.prevTab:S.tab;location.hash="settings";return;
+    case "closesettings":location.hash=S.prevTab&&S.prevTab!=="settings"?S.prevTab:"cooks";return;
+    case "who":Store.setCfg({who:b.dataset.v});toast("This phone: "+b.dataset.v);break;
+    case "saveurl":{const u=val("sheet-url");
+      if(u&&!/^https:\/\/script\.google(usercontent)?\.com\//.test(u)){toast("That doesn't look like an Apps Script Web app link");return}
+      S.urlDraft=null;Store.setCfg({url:u||""});toast(u?"Connecting…":"Sheet link removed");break}
+    case "syncnow":Store.sync();toast("Syncing");break;
+    case "copyurl":copyText("Davis Smoker app: open Settings, paste this into Sheet link, tap Save & connect:\n"+Store.cfg().url);return;
+    /* new run */
+    case "new":S.newRun={kind:S.cooks.length?"run":"testfire",meats:{}};S.cook=null;S.item=null;break;
+    case "cancelnew":S.newRun=null;break;
+    case "kind":S.newRun.kind=b.dataset.k;S.newRun.name=undefined;S.newRun.wood=undefined;S.newRun.meats=b.dataset.k==="cold"?{cheese:{}}:b.dataset.k==="testfire"?{}:Object.fromEntries(Object.entries(S.newRun.meats).filter(([k])=>k!=="cheese"));break;
+    case "meat":{const k=b.dataset.k;if(S.newRun.meats[k])delete S.newRun.meats[k];else S.newRun.meats[k]={};S.newRun.name=undefined;break}
+    case "startrun":{
+      const n=S.newRun,picked=Object.keys(n.meats),now=Date.now(),cid=uidGen();
+      if(n.kind==="run"&&!picked.length)return;
+      const items={};picked.forEach((k,i)=>{const [iid,it]=makeItem(k,n.meats[k],now,i);items[iid]=it});
+      const doc={name:n.name||((n.kind==="run"?picked.map(k=>MEATS[k].label).join(" + "):KINDS[n.kind].label)+" · "+shortDay(dayKey())),
+        kind:n.kind,wood:n.wood||KINDS[n.kind].wood,practice:n.practice!==false,status:"live",startedAt:now,endedAt:null,notes:"",by:who(),
+        pitProbes:defaultPits(n.kind,picked),runSteps:KINDS[n.kind].steps.map(s=>({name:s[0],tip:s[1]||"",at:null})),items,log:[]};
+      if(doc.runSteps[0])doc.runSteps[0].at=now;
+      Store.op({op:"set",c:"cooks",id:cid,data:doc});
+      S.newRun=null;S.cook=cid;window.scrollTo(0,0);toast("Run started");break}
+    /* navigation */
+    case "open":S.cook=id;S.item=null;S.confirm=null;S.addItem=null;window.scrollTo(0,0);break;
+    case "openitem":S.cook=id;S.item=iid;S.confirm=null;window.scrollTo(0,0);break;
+    case "back":S.cook=null;S.item=null;S.confirm=null;break;
+    case "backrun":S.item=null;S.confirm=null;window.scrollTo(0,0);break;
+    /* run logging */
+    case "logtemp":{
+      const r={};let any=false;document.querySelectorAll("[data-probe]").forEach(el=>{const v=numOrNull(el.value);if(v!=null){r[el.dataset.probe]=v;any=true}});
+      if(!any){toast("Enter at least one temperature");return}
+      pushLog(id,{kind:"temp",at:Date.now(),r,note:val("tl-note")});toast("Reading saved");break}
+    case "wood":{const n=+b.dataset.n;pushLog(id,{kind:"wood",at:Date.now(),n});toast(`+${n} split${n>1?"s":""} · ${hm(Date.now())}`);break}
+    case "event":pushLog(id,{kind:"event",at:Date.now(),note:b.dataset.e});toast(b.dataset.e+" · "+hm(Date.now()));break;
+    case "dellog":Store.op({op:"pull",c:"cooks",id,field:"log",match:b.dataset.lid});break;
+    case "runstep":{if(!c)return;saveCook(id,{runSteps:c.runSteps.map((s,i)=>i===+b.dataset.i?{...s,at:s.at?null:Date.now()}:s)});break}
+    case "finish":{if(!c)return;const now=Date.now(),its={};itemsOf(c).forEach(it=>{if(it.onAt&&!it.offAt)its[it.id]={offAt:now}});
+      saveCook(id,{status:"done",endedAt:now,notes:val("fc-notes"),items:its});toast("Run ended · "+dur(now-c.startedAt));break}
+    case "reopen":saveCook(id,{status:"live",endedAt:null});break;
+    case "additem":S.addItem=S.addItem===id?null:id;break;
+    case "additempick":{if(!c)return;const n=itemsOf(c).reduce((m,i)=>Math.max(m,(i.n||0)+1),0);const [nid,it]=makeItem(b.dataset.k,{onNow:false},Date.now(),n);
+      patchItem(id,nid,it);S.addItem=null;S.item=nid;window.scrollTo(0,0);break}
+    /* one meat */
+    case "puton":patchItem(id,iid,{onAt:Date.now()});toast("On at "+hm(Date.now()));break;
+    case "takeoff":{const it=c&&itemOf(c,iid);if(!it)return;patchItem(id,iid,{offAt:Date.now()});toast(it.label+" off after "+dur(Date.now()-it.onAt));break}
+    case "backon":patchItem(id,iid,{offAt:null});break;
+    case "step":{const it=c&&itemOf(c,iid);if(!it)return;patchItem(id,iid,{steps:it.steps.map((s,i)=>i===+b.dataset.i?{...s,at:s.at?null:Date.now()}:s)});break}
+    case "hold":{const v=numOrNull(val("hold-t"));if(v==null){toast("Enter the holding temperature");return}pushLog(id,{kind:"hold",item:iid,at:Date.now(),temp:v});toast(v>=135?"Hold logged":"Below 135°F: reheat or start cooling");break}
+    case "coolstart":patchItem(id,iid,{coolStart:Date.now()});toast("Cooling clock started");break;
+    case "cool":{const v=numOrNull(val("cool-t"));if(v==null){toast("Enter the temperature");return}pushLog(id,{kind:"cool",item:iid,at:Date.now(),temp:v});break}
+    case "delitem":saveCook(id,{items:{[iid]:null}});S.item=null;S.confirm=null;toast("Removed");break;
+    case "askdel":S.confirm=b.dataset.k;break;
+    case "noconfirm":S.confirm=null;break;
+    case "delcook":Store.op({op:"delete",c:"cooks",id});S.cook=null;S.item=null;S.confirm=null;toast("Run deleted");break;
+    /* stock */
+    case "invadd":S.invAdd=true;S.editInv=null;break;
+    case "invedit":S.editInv=id;S.invAdd=false;S.confirm=null;window.scrollTo(0,0);break;
+    case "invcancel":S.invAdd=false;S.editInv=null;S.confirm=null;break;
+    case "invsave":{
+      const name=val("iv-name");if(!name){toast("Give the item a name");return}
+      const fields={name,qty:numOrNull(val("iv-qty"))||0,unit:val("iv-unit"),low:numOrNull(val("iv-low")),cat:val("iv-cat")||"Other",cost:numOrNull(val("iv-cost"))};
+      if(S.editInv)Store.op({op:"update",c:"inventory",id:S.editInv,data:fields});else Store.op({op:"set",c:"inventory",id:uidGen(),data:fields});
+      S.invAdd=false;S.editInv=null;toast("Saved "+name);break}
+    case "invdel":Store.op({op:"delete",c:"inventory",id:S.editInv});S.editInv=null;S.confirm=null;toast("Item deleted");break;
+    case "dq":Store.op({op:"inc",c:"inventory",id,field:"qty",by:Number(b.dataset.d),min:0});break;
+    case "starterinv":STARTER_INV.forEach(([name,unit,cat,low])=>Store.op({op:"set",c:"inventory",id:uidGen(),data:{name,unit,cat,low,qty:0,cost:null}}));toast("Starter list loaded. Count what you have.");break;
+    /* sales */
+    case "pay":S.pay=b.dataset.p;lsSet("ds_pay",S.pay);break;
+    case "sell":{const m=S.menu.find(x=>x.id===id);if(!m)return;
+      if(m.price&&m.unit&&m.unit!=="each"){S.weigh=id;render(true);const w=document.getElementById("wg");if(w){w.scrollIntoView({block:"center"});w.focus()}return}
+      addSale(m,1);break}
+    case "sellw":{const m=S.menu.find(x=>x.id===S.weigh),q=numOrNull(val("wg"));if(!m||!q){toast("Enter the amount");return}addSale({...m,price:m.price},q);S.weigh=null;break}
+    case "weighcancel":S.weigh=null;break;
+    case "unsell":Store.op({op:"pull",c:"sales",id:saleDocId(),field:"lines",match:b.dataset.lid});toast("Sale removed");break;
+    case "menutoggle":S.menuOpen=!S.menuOpen;break;
+    case "menuadd":{const name=val("mn-name");if(!name){toast("Name the menu item");return}
+      Store.op({op:"set",c:"menu",id:uidGen(),data:{name,price:numOrNull(val("mn-price")),unit:val("mn-unit")||"each"}});break}
+    case "menudel":Store.op({op:"delete",c:"menu",id});S.confirm=null;break;
+    case "startermenu":STARTER_MENU.forEach(([name,price])=>Store.op({op:"set",c:"menu",id:uidGen(),data:{name,unit:"each",price}}));toast("Sample menu loaded");break;
+    case "costtoggle":S.costOpen=!S.costOpen;break;
+    case "costsave":{const k=dayKey(),vp=numOrNull(val("co-vp"));
+      Store.op({op:"set",c:"costs",id:k,data:{venuePct:vp,venue:vp==null?numOrNull(val("co-v")):null,food:numOrNull(val("co-f")),wood:numOrNull(val("co-w")),cardPct:numOrNull(val("co-cp"))??3,other:numOrNull(val("co-o"))}});
+      S.costOpen=false;toast("Costs saved");break}
+    case "csv":exportCsv(b.dataset.k);return;
+    /* prep */
+    case "plan":{if(!S.plan)return;const items=S.plan.items.map((s,i)=>i===+b.dataset.i?{...s,at:s.at?null:Date.now(),by:s.at?"":who()}:s);
+      if(Store.get("plan","checklist"))Store.op({op:"update",c:"plan",id:"checklist",data:{items}});else Store.op({op:"set",c:"plan",id:"checklist",data:{items}});break}
+    case "copy":copyText(b.dataset.v);return;
+    default:return;
+  }
+  render(true);
+});
+/* new-run form fields live in S.newRun so re-renders keep them */
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.id==="sheet-url"){S.urlDraft=el.value;return}
+  if(!el.dataset||!el.dataset.nr||!S.newRun)return;
+  const f=el.dataset.nr,v=el.type==="checkbox"?el.checked:el.value;
+  if(el.dataset.m){S.newRun.meats[el.dataset.m]=S.newRun.meats[el.dataset.m]||{};S.newRun.meats[el.dataset.m][f]=v}else S.newRun[f]=v;
+});
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset&&el.dataset.nr&&el.type==="checkbox"&&S.newRun){const v=el.checked;if(el.dataset.m)S.newRun.meats[el.dataset.m][el.dataset.nr]=v;else S.newRun[el.dataset.nr]=v}
+  if(el.dataset&&el.dataset.nr==="wood"&&S.newRun)S.newRun.wood=el.value;
+  if(el.id==="who-other"){const v=el.value.trim();if(v){Store.setCfg({who:v});toast("This phone: "+v)}}
+  if(el.id==="sl-place"){S.place=el.value.trim();lsSet("ds_place",S.place)}
+  if(el.dataset&&el.dataset.price){Store.op({op:"update",c:"menu",id:el.dataset.price,data:{price:numOrNull(el.value)}});toast("Price saved")}
+  if(el.dataset&&el.dataset.it){
+    const c=cookById(el.dataset.id),it=c&&itemOf(c,el.dataset.iid);if(!it)return;const f=el.dataset.it;
+    if(f==="probes"){const labels=el.value.split("\n").map(s=>s.trim()).filter(Boolean).slice(0,4);
+      patchItem(c.id,it.id,{probes:labels.map((l,i)=>{const old=(it.probes||[]).find(p=>p.label===l);return old||{id:it.id+"-p"+uidGen().slice(-3)+i,label:l}})})}
+    else patchItem(c.id,it.id,{[f]:numOrNull(el.value)});
+    toast("Saved");
+  }
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-probe],#tl-note")){const b=document.querySelector('[data-act="logtemp"]');if(b)b.click()}});
+
+Store.on(()=>render());
+setInterval(()=>{if(S.tab==="cooks")tickClocks();syncChip()},30000);
+render(true);
+Store.sync();
+})();
+</script>
+</body>
+</html>

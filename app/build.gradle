@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.edson.davissmoker'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.edson.davissmoker'
+        minSdk 26
+        targetSdk 34
+        // GitHub sets BUILD_NUMBER so every build installs over the last one
+        versionCode Integer.parseInt(System.getenv('BUILD_NUMBER') ?: '1')
+        versionName "1.0." + (System.getenv('BUILD_NUMBER') ?: '1')
+    }
+
+    signingConfigs {
+        release {
+            // Same key every build, so updates install over the old app without losing anything
+            storeFile file('davis-smoker.jks')
+            storePassword 'davis-smoker-2026'
+            keyAlias 'davis'
+            keyPassword 'davis-smoker-2026'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Flame, drawn in the 108dp adaptive-icon canvas (safe zone is the center 66dp) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#E2683C"
+        android:pathData="M54,26 C60,36 70,43 70,58 A16,16 0 0 1 38,58 C38,51 41,47 45,44 C45,51 48,55 52,56 C52,46 47,38 54,26 Z" />
+    <path android:fillColor="#F6C26B"
+        android:pathData="M54,50 C57,55 61,58 61,64 A7,7 0 0 1 47,64 C47,59 51,56 54,50 Z" />
+    <path android:fillColor="#EFE4DC"
+        android:pathData="M34,78 L74,78 L74,82 L34,82 Z" />
+</vector>
